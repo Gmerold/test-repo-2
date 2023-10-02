@@ -1,0 +1,14 @@
+name: Repository Dispatch
+
+on:
+  repository_dispatch:
+    types: ["operator_change"]
+
+jobs:
+  job-1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run: |
+          echo "GitHub REF: "${{ github.event.client_payload.github_ref }}
+          echo "GitHub Repo: "${{ github.event.client_payload.github_repo }}
