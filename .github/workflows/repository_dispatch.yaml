@@ -8,5 +8,40 @@ jobs:
     steps:
       - name: Test
         run: |
-          echo "GitHub REF: "${{ github.event.client_payload.github_ref }}
           echo "GitHub Repo: "${{ github.event.client_payload.github_repo }}
+  job-2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail the build
+        run: exit 1
+
+  create-issue:
+    runs-on: ubuntu-latest
+    if: ${{ always() && github.ref_name == 'main' && contains(join(needs.*.result, ','), 'failure') }}
+    needs: [ job-1, job-2 ]
+    steps:
+      - name: Check whether the issue already exists
+        id: check-issue
+        continue-on-error: true
+        run: |
+          if curl -L -H "Authorization: Bearer ${{ github.token }}" https://api.github.com/repos/$GITHUB_REPOSITORY/issues | grep "CI run failed"; then
+            echo ISSUE_EXISTS="True" >> $GITHUB_OUTPUT
+          else
+            echo ISSUE_EXISTS="False" >> $GITHUB_OUTPUT
+          fi
+      - name: Get commit which triggered the build
+        id: triggering-commit
+        continue-on-error: true
+        run: |
+          echo TRIGGERING_COMMIT=$(curl -L -H "Authorization: Bearer ${{ github.token }}" https://api.github.com/repos/${{ github.event.client_payload.github_repo }}/commits/main | jq -r ".html_url")
+      - name: Create issue
+        if: steps.check-issue.outputs.ISSUE_EXISTS == 'False'
+        uses: dacbd/create-issue-action@main
+        with:
+          token: ${{ github.token }}
+          title: "[test-repo-2] CI run failed"
+          body: |
+            ### Context
+            [Failed Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            [Codebase](https://github.com/${{ github.repository }}/tree/${{ github.sha }})
+            [Triggering Commit](${{ steps.triggering-commit.outputs.TRIGGERING_COMMIT }})
