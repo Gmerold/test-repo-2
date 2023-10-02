@@ -1,8 +1,6 @@
 name: Repository Dispatch
 
-on:
-  repository_dispatch:
-    types: ["operator_change"]
+on: repository_dispatch
 
 jobs:
   job-1:
