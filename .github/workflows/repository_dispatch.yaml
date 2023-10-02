@@ -33,7 +33,7 @@ jobs:
         id: triggering-commit
         continue-on-error: true
         run: |
-          echo TRIGGERING_COMMIT=$(curl -L -H "Authorization: Bearer ${{ github.token }}" https://api.github.com/repos/${{ github.event.client_payload.github_repo }}/commits/main | jq -r ".html_url")
+          echo TRIGGERING_COMMIT=$(curl -L -H "Authorization: Bearer ${{ github.token }}" https://api.github.com/repos/${{ github.event.client_payload.github_repo }}/commits/main | jq -r ".html_url") >> $GITHUB_OUTPUT
       - name: Create issue
         if: steps.check-issue.outputs.ISSUE_EXISTS == 'False'
         uses: dacbd/create-issue-action@main
